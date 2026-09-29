@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-canvas: #ededed;
+  --color-surface: #ffffff;
+  --color-ink: #141415;
+  --color-subtle: #8a8a8a;
+  --color-card: #f7f7f7;
+  --color-borderline: #ededed;
+}
+
+html, body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Fix layout shift / scrollbar flash */
+  height: 100%;
+  width: 100%;
+}
+
+/* Background noise texture directly on body to avoid layer invalidation / flicker */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url('/assets/noise.png');
+  background-size: 100px;
+  background-repeat: repeat;
+  opacity: 0.035;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translateZ(0); /* Hardware accelerated composite */
+}
+
+/* Scrollbar invisible */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
