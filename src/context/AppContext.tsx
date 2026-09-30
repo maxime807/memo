@@ -1,9 +1,10 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { eventConfig } from '@/config';
 
 export type Photo = {
   id: string;
   url: string;
+  fullUrl?: string;
   downloadUrl?: string;
   title: string;
   author: string;
@@ -13,11 +14,11 @@ export type Photo = {
 
 interface AppContextState {
   photos: Photo[];
+  setPhotos: React.Dispatch<React.SetStateAction<Photo[]>>;
   isUploadOpen: boolean;
   setUploadOpen: (open: boolean) => void;
   lightboxPhotoId: string | null;
   setLightboxPhotoId: (id: string | null) => void;
-  addPhotos: (newPhotos: Photo[]) => void;
 }
 
 const AppContext = createContext<AppContextState | undefined>(undefined);
@@ -27,19 +28,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isUploadOpen, setUploadOpen] = useState(false);
   const [lightboxPhotoId, setLightboxPhotoId] = useState<string | null>(null);
 
-  const addPhotos = (newPhotos: Photo[]) => {
-    setPhotos((prev) => [...newPhotos, ...prev]);
-  };
+  // Préchargement et décodage bitmap proactif en arrière-plan (zéro latence au scroll)
+  useEffect(() => {
+    photos.forEach((photo) => {
+      const img = new Image();
+      img.src = photo.url;
+      if (typeof img.decode === 'function') {
+        img.decode().catch(() => {});
+      }
+    });
+  }, [photos]);
 
   return (
     <AppContext.Provider
       value={{
         photos,
+        setPhotos,
         isUploadOpen,
         setUploadOpen,
         lightboxPhotoId,
         setLightboxPhotoId,
-        addPhotos,
       }}
     >
       {children}

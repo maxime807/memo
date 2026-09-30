@@ -65,7 +65,7 @@ export function Lightbox() {
             {/* Bouton Fermer circulaire */}
             <button
               onClick={handleClose}
-              className="absolute -top-3 -right-3 md:-right-12 md:top-0 w-10 h-10 rounded-full bg-white text-ink flex items-center justify-center shadow-lg hover:scale-105 transition-transform cursor-pointer z-20 border border-borderline"
+              className="absolute top-2 right-2 sm:-top-3 sm:-right-3 md:-right-12 md:top-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white text-ink flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform cursor-pointer z-30 border border-borderline"
               aria-label="Fermer"
             >
               <X size={16} />
@@ -75,7 +75,7 @@ export function Lightbox() {
             {currentIndex > 0 && (
               <button
                 onClick={handlePrev}
-                className="absolute -left-4 md:-left-14 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white text-ink flex items-center justify-center shadow-lg hover:scale-105 transition-transform cursor-pointer z-20 border border-borderline"
+                className="absolute left-2 sm:-left-4 md:-left-12 lg:-left-14 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/95 text-ink flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform cursor-pointer z-30 border border-borderline"
                 aria-label="Précédent"
               >
                 <ChevronLeft size={20} />
@@ -86,7 +86,7 @@ export function Lightbox() {
             {currentIndex < photos.length - 1 && (
               <button
                 onClick={handleNext}
-                className="absolute -right-4 md:-right-14 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white text-ink flex items-center justify-center shadow-lg hover:scale-105 transition-transform cursor-pointer z-20 border border-borderline"
+                className="absolute right-2 sm:-right-4 md:-right-12 lg:-right-14 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/95 text-ink flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-transform cursor-pointer z-30 border border-borderline"
                 aria-label="Suivant"
               >
                 <ChevronRight size={20} />
@@ -97,7 +97,7 @@ export function Lightbox() {
             <div className="relative overflow-hidden flex items-center justify-center bg-card">
               <img
                 key={currentPhoto.id}
-                src={currentPhoto.url}
+                src={currentPhoto.fullUrl || currentPhoto.url}
                 alt={currentPhoto.title}
                 decoding="sync"
                 className="max-h-[76vh] w-auto max-w-full object-contain"

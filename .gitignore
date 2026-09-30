@@ -7,22 +7,34 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-extracted/*
+# Dependencies
+node_modules/
 
-# Editor directories and files
+# Production build outputs & caches
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Environment variables & secrets (Strict: never commit real keys)
+.env*
+!.env.example
+
+# Temporary / Scratch directories
+.impeccable/
+extracted/
+components_library/
+Images Exemples/
+Images Loader/
+*.local
+
+# Editor & OS files
+.DS_Store
+Thumbs.db
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-
-# Environment secrets
-.env*

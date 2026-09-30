@@ -18,30 +18,53 @@ html, body {
   -webkit-font-smoothing: antialiased;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* Fix layout shift / scrollbar flash */
-  height: 100%;
   width: 100%;
 }
 
-/* Background noise texture directly on body to avoid layer invalidation / flicker */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-image: url('/assets/noise.png');
-  background-size: 100px;
-  background-repeat: repeat;
-  opacity: 0.035;
-  pointer-events: none;
-  z-index: 9999;
-  transform: translateZ(0); /* Hardware accelerated composite */
+@media (min-width: 768px) {
+  html, body {
+    overflow: hidden;
+    height: 100%;
+  }
 }
 
-/* Scrollbar invisible */
+@media (max-width: 767px) {
+  html, body {
+    overflow-y: auto;
+    min-height: 100%;
+  }
+}
+
+/* Scrollbars discrètes */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Classes utilitaires garanties pour la DA Owen */
+@layer utilities {
+  .bg-surface {
+    background-color: #ffffff !important;
+  }
+  .bg-canvas {
+    background-color: #ededed !important;
+  }
+  .text-ink {
+    color: #141415 !important;
+  }
+  .text-subtle {
+    color: #8a8a8a !important;
+  }
+  .border-borderline {
+    border-color: #ededed !important;
+  }
+  .font-editorial {
+    font-family: 'Funnel Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  }
+  .tracking-tightest {
+    letter-spacing: -0.04em !important;
+  }
 }

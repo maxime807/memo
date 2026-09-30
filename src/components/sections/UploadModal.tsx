@@ -1,61 +1,81 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, UploadCloud, CheckCircle2 } from 'lucide-react';
+import { X, UploadCloud, FileImage, Trash2, ArrowUpRight } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 
 export function UploadModal() {
-  const { isUploadOpen, setUploadOpen, addPhotos } = useApp();
+  const { isUploadOpen, setUploadOpen } = useApp();
   const [isDragging, setIsDragging] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleClose = () => {
-    if (isUploading) return;
     setUploadOpen(false);
-    setProgress(0);
+    setSelectedFiles([]);
+    setIsDragging(false);
   };
 
-  const simulateUpload = (files: FileList | File[]) => {
-    if (files.length === 0) return;
-    
-    setIsUploading(true);
-    setProgress(0);
+  const handleFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const newFiles = Array.from(files).filter((file) => file.type.startsWith('image/'));
+    if (newFiles.length === 0) return;
 
-    const interval = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 100) {
-          clearInterval(interval);
-          setTimeout(() => {
-            const now = new Date();
-            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-            
-            const newUploadedPhotos = Array.from(files).map((file, i) => ({
-              id: `upload-${Date.now()}-${i}`,
-              url: URL.createObjectURL(file),
-              title: file.name.replace(/\.[^/.]+$/, '').toUpperCase(),
-              author: 'Invité',
-              time: timeStr,
-              aspectRatio: 1,
-            }));
-            
-            addPhotos(newUploadedPhotos);
-            setIsUploading(false);
-            setUploadOpen(false);
-            setProgress(0);
-          }, 400);
-          return 100;
-        }
-        return p + 20;
-      });
-    }, 120);
+    // Prise en charge des fichiers sélectionnés sans persistance locale ni doublon
+    setSelectedFiles((prev) => [...prev, ...newFiles]);
+
+    // =========================================================================
+    // TODO (Apprenants) : Connecter l'upload à Supabase Storage
+    // =========================================================================
+    // C'est ici que vous déclencherez l'envoi réel vers votre bucket Supabase Storage :
+    //
+    // const uploadToSupabase = async (file: File) => {
+    //   const filePath = `events/${Date.now()}-${file.name}`;
+    //   const { data, error } = await supabase.storage.from('photos').upload(filePath, file);
+    //   if (error) console.error('Erreur Supabase:', error);
+    //   return data;
+    // };
+    // =========================================================================
+    console.log('[Supabase Storage - Starter] Fichiers prêts pour upload :', newFiles);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUploadSubmit = () => {
+    // Point d'entrée pour les apprenants lors du clic sur le bouton de soumission
+    console.log('[Supabase Storage] Déclenchement upload pour', selectedFiles);
+    // Exemple d'action après upload :
+    // await uploadFilesToSupabase(selectedFiles);
+    // handleClose();
   };
 
   return (
     <AnimatePresence>
       {isUploadOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          {/* Backdrop sombre fluide */}
+          {/* Backdrop sombre */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -66,7 +86,7 @@ export function UploadModal() {
             onClick={handleClose}
           />
 
-          {/* Boîte Modale blanche 100% opaque */}
+          {/* Boîte Modale blanche */}
           <motion.div
             initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -88,70 +108,97 @@ export function UploadModal() {
               </div>
               <button
                 onClick={handleClose}
-                disabled={isUploading}
-                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-canvas transition-colors cursor-pointer disabled:opacity-40"
+                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-canvas transition-colors cursor-pointer"
+                aria-label="Fermer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            {/* Corps Modale */}
-            {!isUploading ? (
-              <div
-                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={(e) => { e.preventDefault(); setIsDragging(false); simulateUpload(e.dataTransfer.files); }}
-                onClick={() => fileInputRef.current?.click()}
-                className={`
-                  border-2 border-dashed p-10 md:p-12 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200
-                  ${isDragging ? 'border-ink bg-card' : 'border-borderline bg-card/60 hover:border-ink hover:bg-card'}
-                `}
-              >
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  className="hidden"
-                  ref={fileInputRef}
-                  onChange={(e) => e.target.files && simulateUpload(e.target.files)}
-                />
-                <div className="w-12 h-12 bg-white border border-borderline rounded-full flex items-center justify-center mb-3 text-ink shadow-sm">
-                  <UploadCloud size={22} />
-                </div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-ink mb-1">
-                  GLISSEZ VOS PHOTOS ICI
-                </p>
-                <p className="text-[11px] text-subtle uppercase">
-                  ou cliquez pour explorer vos fichiers
-                </p>
+            {/* Zone de Glisser-Déposer */}
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`
+                border-2 border-dashed p-8 md:p-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200
+                ${isDragging ? 'border-ink bg-card' : 'border-borderline bg-card/60 hover:border-ink hover:bg-card'}
+              `}
+            >
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                className="hidden"
+                ref={fileInputRef}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => {
+                  handleFiles(e.target.files);
+                  e.target.value = '';
+                }}
+              />
+              <div className="w-12 h-12 bg-white border border-borderline rounded-full flex items-center justify-center mb-3 text-ink shadow-sm">
+                <UploadCloud size={22} />
               </div>
-            ) : (
-              <div className="py-10 flex flex-col items-center text-center">
-                {progress < 100 ? (
-                  <>
-                    <div className="w-12 h-12 border-2 border-borderline border-t-ink rounded-full animate-spin mb-4" />
-                    <p className="text-xs font-semibold uppercase tracking-wider text-ink mb-2">
-                      ENVOI DES PHOTOS... {progress}%
-                    </p>
-                    <div className="w-full h-1.5 bg-card overflow-hidden border border-borderline">
-                      <div
-                        className="h-full bg-ink transition-all duration-120"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <motion.div
-                    initial={{ scale: 0.85, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="flex flex-col items-center text-ink"
+              <p className="text-xs font-semibold uppercase tracking-wider text-ink mb-1">
+                GLISSEZ VOS PHOTOS ICI
+              </p>
+              <p className="text-[11px] text-subtle uppercase">
+                ou cliquez pour explorer vos fichiers
+              </p>
+            </div>
+
+            {/* Liste des fichiers prêts pour Supabase Storage */}
+            {selectedFiles.length > 0 && (
+              <div className="mt-5 border-t border-borderline/80 pt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-ink">
+                    Fichiers sélectionnés ({selectedFiles.length})
+                  </span>
+                  <button
+                    onClick={() => setSelectedFiles([])}
+                    className="text-[10px] uppercase tracking-wider text-subtle hover:text-ink transition-colors cursor-pointer"
                   >
-                    <CheckCircle2 size={48} className="mb-3 text-ink" />
-                    <p className="text-sm font-semibold uppercase tracking-wider">
-                      PHOTOS AJOUTÉES À L'ALBUM !
-                    </p>
-                  </motion.div>
-                )}
+                    Tout vider
+                  </button>
+                </div>
+
+                <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1 no-scrollbar">
+                  {selectedFiles.map((file, idx) => (
+                    <div
+                      key={`${file.name}-${idx}`}
+                      className="flex items-center justify-between p-2 bg-canvas/70 border border-borderline/60 text-xs"
+                    >
+                      <div className="flex items-center gap-2 truncate max-w-[80%]">
+                        <FileImage size={14} className="text-subtle shrink-0" />
+                        <span className="truncate font-mono text-[11px]">{file.name}</span>
+                        <span className="text-[10px] text-subtle shrink-0">
+                          ({(file.size / 1024).toFixed(0)} Ko)
+                        </span>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveFile(idx);
+                        }}
+                        className="text-subtle hover:text-ink p-1 cursor-pointer"
+                        aria-label="Supprimer"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Bouton d'action prêt pour Supabase */}
+                <button
+                  onClick={handleUploadSubmit}
+                  className="mt-4 w-full py-3 bg-ink text-surface font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-neutral-800 transition-colors cursor-pointer"
+                >
+                  <span>Uploader avec Supabase Storage</span>
+                  <ArrowUpRight size={14} />
+                </button>
               </div>
             )}
           </motion.div>
